@@ -1,0 +1,33 @@
+/* src/components/GameBoard.css */
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 20px);
+    grid-template-rows: repeat(10, 20px);
+    gap: 1px;
+    position: relative;
+}
+
+.cell {
+    width: 20px;
+    height: 20px;
+    background-color: lightgrey;
+}
+
+.cell.snake {
+    background-color: green;
+}
+
+.cell.food {
+    background-color: red;
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: bold;
+    color: red;
+}
