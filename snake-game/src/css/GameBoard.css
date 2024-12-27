@@ -14,9 +14,14 @@
     background-color: lightgrey;
 }
 
-.cell.snake {
+.cell.snake1 {
     background-color: green;
 }
+
+.cell.snake2 {
+    background-color: blue;
+}
+
 
 .cell.food {
     background-color: red;
