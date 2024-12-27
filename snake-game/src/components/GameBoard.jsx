@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../css/GameBoard.css';
 
 const boardSize = 10;
@@ -10,6 +11,9 @@ const GameBoard = ({ mode, player }) => {
   const [food, setFood] = useState(initialFood);
   const [direction, setDirection] = useState({ x: 1, y: 0 });
   const [gameOver, setGameOver] = useState(false);
+  const [score, setScore] = useState(0); // Puntaje del jugador
+
+  const navigate = useNavigate();
 
   const isSinglePlayer = mode === 'single';
 
@@ -38,7 +42,11 @@ const GameBoard = ({ mode, player }) => {
   }, [direction]);
 
   useEffect(() => {
-    if (gameOver) return;
+    if (gameOver) {
+      // Redirigir a la página de puntaje cuando el juego termine
+      navigate('/scoreboard', { state: { score, mode: isSinglePlayer ? 'single' : 'multi' } });
+      return;
+    }
 
     const moveSnake = () => {
       const newSnake = [...snake];
@@ -65,6 +73,7 @@ const GameBoard = ({ mode, player }) => {
           x: Math.floor(Math.random() * boardSize),
           y: Math.floor(Math.random() * boardSize),
         });
+        setScore((prev) => prev + 10); // Incrementar el puntaje
       } else {
         newSnake.pop();
       }
@@ -74,13 +83,13 @@ const GameBoard = ({ mode, player }) => {
 
     const interval = setInterval(moveSnake, 200);
     return () => clearInterval(interval);
-  }, [snake, direction, food, gameOver]);
+  }, [snake, direction, food, gameOver, navigate, score]);
 
   return (
     <div className="game-container">
       <div className="board">
         {Array.from({ length: boardSize }).map((_, row) =>
-          Array.from({ length: boardSize }).map((_, col) => (
+          Array.from({ length: 10 }).map((_, col) => (
             <div
               key={`${row}-${col}`}
               className={`cell ${
@@ -94,7 +103,6 @@ const GameBoard = ({ mode, player }) => {
           ))
         )}
       </div>
-      {gameOver && <div className="game-over">Game Over</div>}
     </div>
   );
 };

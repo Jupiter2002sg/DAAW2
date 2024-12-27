@@ -1,27 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import '../css/ScoreBoard.css'; // Asegúrate de que este archivo existe
 
-function ScoreBoard() {
-  const [scores, setScores] = useState([]);
+const ScoreBoard = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    axios.get('http://localhost:5173/api/scores') 
-      .then((response) => setScores(response.data))
-      .catch((error) => console.error(error));
-  }, []);
+  // Datos del puntaje recibidos al redirigir
+  const { score, mode } = location.state || { score: 0, mode: 'single' };
+
+  const handleRestart = () => {
+    // Redirige a la página de inicio
+    navigate('/');
+  };
 
   return (
-    <div>
-      <h2>Ranking</h2>
-      <ul>
-        {scores.map((score, index) => (
-          <li key={index}>
-            {score.playerName}: {score.score}
-          </li>
-        ))}
-      </ul>
+    <div className="scoreboard-container">
+      <h1>¡GAME OVER!</h1>
+      <p>Modo: {mode === 'single' ? 'Un Jugador' : 'Dos Jugadores'}</p>
+      <h2>Tu Puntaje: {score}</h2>
+      <button onClick={handleRestart}>Volver al Inicio</button>
     </div>
   );
-}
+};
 
 export default ScoreBoard;

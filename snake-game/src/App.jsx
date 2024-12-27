@@ -14,6 +14,7 @@ function App() {
                     <Route path="/single-player" element={<GameBoard mode="single" />} />
                     <Route path="/snake1" element={<GameBoard player={'snake1'} />} />
                     <Route path="/snake2" element={<GameBoard player={'snake2'} />} />
+                    <Route path="/scoreboard" element={<ScoreBoard />} />
                 </Routes>
             </Router>
         </div>
