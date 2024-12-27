@@ -1,0 +1,76 @@
+/* Contenedor principal centrado */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Altura completa de la pantalla */
+    text-align: center;
+    background-color: #f0f0f0; /* Fondo claro */
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  /* Título del juego */
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  /* Texto introductorio */
+  p {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    color: #555;
+  }
+  
+  /* Grupo de botones */
+  .button-group {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  /* Botones */
+  .snake-button {
+    font-size: 1.2rem;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* Botón verde */
+  .snake-button.green {
+    background-color: green;
+  }
+  
+  .snake-button.green:hover {
+    background-color: darkgreen;
+    transform: scale(1.1);
+  }
+  
+  /* Botón azul */
+  .snake-button.blue {
+    background-color: blue;
+  }
+  
+  .snake-button.blue:hover {
+    background-color: darkblue;
+    transform: scale(1.1);
+  }
+
+  /* Botón para jugar solo */
+.snake-button.single {
+    background-color: orange;
+    color: white;
+  }
+  
+  .snake-button.single:hover {
+    background-color: darkorange;
+  }
+  

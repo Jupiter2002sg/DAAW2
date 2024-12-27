@@ -1,62 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import '../css/GameBoard.css';
 
-const boardSize = 10; 
-const initialFood = { x: 5, y: 5 }; 
+const boardSize = 10;
+const initialSnake = [{ x: 2, y: 2 }];
+const initialFood = { x: 5, y: 5 };
 
-const GameBoard = ({ player }) => {
-  const [snakes, setSnakes] = useState({
-    SNAKE1: [{ x: 2, y: 2 }],
-    SNAKE2: [{ x: 7, y: 7 }],
-  });
+const GameBoard = ({ mode, player }) => {
+  const [snake, setSnake] = useState(initialSnake);
   const [food, setFood] = useState(initialFood);
-  const [directions, setDirections] = useState({
-    SNAKE1: { x: 1, y: 0 },
-    SNAKE2: { x: -1, y: 0 },
-  });
+  const [direction, setDirection] = useState({ x: 1, y: 0 });
   const [gameOver, setGameOver] = useState(false);
 
-  const isSnake1 = player === 'snake1';
-  const currentSnakeKey = isSnake1 ? 'SNAKE1' : 'SNAKE2';
-  const enemySnakeKey = isSnake1 ? 'SNAKE2' : 'SNAKE1';
+  const isSinglePlayer = mode === 'single';
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const newDirection = { ...directions[currentSnakeKey] };
       switch (e.key) {
         case 'ArrowUp':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = -1;
+          if (direction.y === 0) setDirection({ x: 0, y: -1 });
           break;
         case 'ArrowDown':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = 1;
+          if (direction.y === 0) setDirection({ x: 0, y: 1 });
           break;
         case 'ArrowLeft':
-          if (newDirection.x === 0) newDirection.x = -1, newDirection.y = 0;
+          if (direction.x === 0) setDirection({ x: -1, y: 0 });
           break;
         case 'ArrowRight':
-          if (newDirection.x === 0) newDirection.x = 1, newDirection.y = 0;
+          if (direction.x === 0) setDirection({ x: 1, y: 0 });
           break;
         default:
-          return;
+          break;
       }
-      setDirections((prev) => ({
-        ...prev,
-        [currentSnakeKey]: newDirection,
-      }));
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentSnakeKey, directions]);
-
+  }, [direction]);
 
   useEffect(() => {
     if (gameOver) return;
 
-    const moveSnake = (snakeKey) => {
-      const currentSnake = snakes[snakeKey];
-      const direction = directions[snakeKey];
-      const newSnake = [...currentSnake];
+    const moveSnake = () => {
+      const newSnake = [...snake];
       const head = newSnake[0];
       const newHead = { x: head.x + direction.x, y: head.y + direction.y };
 
@@ -66,11 +51,10 @@ const GameBoard = ({ player }) => {
         newHead.y < 0 ||
         newHead.x >= boardSize ||
         newHead.y >= boardSize ||
-        newSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y) ||
-        snakes[enemySnakeKey].some((segment) => segment.x === newHead.x && segment.y === newHead.y)
+        newSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y)
       ) {
         setGameOver(true);
-        return null;
+        return;
       }
 
       newSnake.unshift(newHead);
@@ -85,38 +69,31 @@ const GameBoard = ({ player }) => {
         newSnake.pop();
       }
 
-      return newSnake;
+      setSnake(newSnake);
     };
 
-    const interval = setInterval(() => {
-      setSnakes((prev) => ({
-        SNAKE1: moveSnake('SNAKE1') || prev.SNAKE1,
-        SNAKE2: moveSnake('SNAKE2') || prev.SNAKE2,
-      }));
-    }, 200);
-
+    const interval = setInterval(moveSnake, 200);
     return () => clearInterval(interval);
-  }, [snakes, directions, food, gameOver, enemySnakeKey]);
+  }, [snake, direction, food, gameOver]);
 
-  // Renderizar el tablero
   return (
-    <div className="board">
-      {Array.from({ length: boardSize }).map((_, row) =>
-        Array.from({ length: boardSize }).map((_, col) => (
-          <div
-            key={`${row}-${col}`}
-            className={`cell ${
-              snakes.SNAKE1.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake1'
-                : snakes.SNAKE2.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake2'
-                : food.x === col && food.y === row
-                ? 'food'
-                : ''
-            }`}
-          />
-        ))
-      )}
+    <div className="game-container">
+      <div className="board">
+        {Array.from({ length: boardSize }).map((_, row) =>
+          Array.from({ length: boardSize }).map((_, col) => (
+            <div
+              key={`${row}-${col}`}
+              className={`cell ${
+                snake.some((segment) => segment.x === col && segment.y === row)
+                  ? 'snake1'
+                  : food.x === col && food.y === row
+                  ? 'food'
+                  : ''
+              }`}
+            />
+          ))
+        )}
+      </div>
       {gameOver && <div className="game-over">Game Over</div>}
     </div>
   );

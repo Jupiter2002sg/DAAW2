@@ -1,38 +1,53 @@
-/* src/components/GameBoard.css */
-
-.board {
+/* Contenedor principal centrado */
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Altura completa de la pantalla */
+    background-color: #f0f0f0; /* Fondo claro */
+    box-sizing: border-box;
+  }
+  
+  /* Tablero del juego */
+  .board {
     display: grid;
-    grid-template-columns: repeat(10, 20px);
-    grid-template-rows: repeat(10, 20px);
-    gap: 1px;
-    position: relative;
-}
-
-.cell {
-    width: 20px;
-    height: 20px;
+    grid-template-columns: repeat(10, 50px); /* Cada celda mide 50px */
+    grid-template-rows: repeat(10, 50px);
+    gap: 3px; /* Espaciado entre celdas */
+    background-color: #ddd;
+    padding: 10px;
+    border: 3px solid #333; /* Bordes del tablero */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra alrededor del tablero */
+  }
+  
+  /* Celdas del tablero */
+  .cell {
+    width: 50px;
+    height: 50px;
     background-color: lightgrey;
-}
-
-.cell.snake1 {
-    background-color: green;
-}
-
-.cell.snake2 {
-    background-color: blue;
-}
-
-
-.cell.food {
+  }
+  
+  /* Estilo de la comida */
+  .cell.food {
     background-color: red;
-}
-
-.game-over {
+  }
+  
+  /* Estilo de la serpiente 1 */
+  .cell.snake1 {
+    background-color: green;
+  }
+  
+  /* Estilo de la serpiente 2 */
+  .cell.snake2 {
+    background-color: blue;
+  }
+  
+  /* Mensaje de Game Over */
+  .game-over {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    font-weight: bold;
     color: red;
-}
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+  }
+  

@@ -24,45 +24,63 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  /* Eliminamos flexbox del body para evitar conflictos */
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #242424;
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Aseguramos que el contenedor del tablero tenga control total */
+.game-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Aseguramos que ocupe todo el ancho */
+  height: 100%; /* Aseguramos que ocupe toda la altura */
+  background-color: #242424; /* Color de fondo consistente */
+}
+
+/* Estilo del tablero */
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, 50px);
+  grid-template-rows: repeat(10, 50px);
+  gap: 3px;
+  background-color: #ddd;
+  padding: 10px;
+  border: 3px solid #333;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilo de las celdas */
+.cell {
+  width: 50px;
+  height: 50px;
+  background-color: lightgrey;
+}
+
+/* Estilo de la comida */
+.cell.food {
+  background-color: red;
+}
+
+/* Estilo de Snake 1 */
+.cell.snake1 {
+  background-color: green;
+}
+
+/* Estilo de Snake 2 */
+.cell.snake2 {
+  background-color: blue;
+}
+
+/* Mensaje de Game Over */
+.game-over {
+  position: absolute;
+  color: red;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
 }
