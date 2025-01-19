@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configura la URL base de tu API
 const api = axios.create({
-  baseURL: 'http://localhost:8080/snakegame-1/api/scores', 
+  baseURL: 'https://0053-46-136-186-215.ngrok-free.app/snakegame-1/api/scores', 
 });
 
 // Función para obtener el ranking de puntuaciones
