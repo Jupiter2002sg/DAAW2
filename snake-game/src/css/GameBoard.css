@@ -42,12 +42,10 @@
     background-color: blue;
   }
   
-  /* Mensaje de Game Over */
-  .game-over {
-    position: absolute;
-    color: red;
-    font-size: 2rem;
-    font-weight: bold;
-    text-align: center;
+  .waiting-message {
+    color: black;
+    font-size: 1.5rem; /* Ajusta el tamaño según sea necesario */
+    text-align: center; /* Centra el texto si lo deseas */
   }
+  
   

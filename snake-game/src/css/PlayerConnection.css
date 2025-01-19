@@ -1,0 +1,14 @@
+.connection-status {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #888;
+  }
+  
+  .connection-status.connected {
+    color: #4caf50; /* Verde para conectado */
+  }
+  
+  .connection-status.waiting {
+    color: #f44336; /* Rojo para esperando */
+  }
+  

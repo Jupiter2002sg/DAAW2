@@ -1,0 +1,53 @@
+/* Contenedor principal: ocupa toda la pantalla */
+.choose-snake-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw; /* 100% del ancho de la ventana */
+  height: 100vh; /* 100% del alto de la ventana */
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #4caf50, #2196f3); /* Fondo degradado */
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  color: white;
+  box-sizing: border-box;
+}
+
+/* Título principal */
+h1 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+}
+
+/* Botones */
+.snake-button {
+  font-size: 1.5rem;
+  padding: 15px 30px;
+  margin: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  color: white;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.snake-button.green {
+  background-color: green;
+}
+
+.snake-button.green:hover {
+  background-color: darkgreen;
+  transform: scale(1.1);
+}
+
+.snake-button.blue {
+  background-color: blue;
+}
+
+.snake-button.blue:hover {
+  background-color: darkblue;
+  transform: scale(1.1);
+}

@@ -1,76 +1,68 @@
-/* Contenedor principal centrado */
+/* Contenedor principal */
 .home-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; /* Altura completa de la pantalla */
-    text-align: center;
-    background-color: #f0f0f0; /* Fondo claro */
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    box-sizing: border-box;
-  }
-  
-  /* Título del juego */
-  h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-  
-  /* Texto introductorio */
-  p {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-    color: #555;
-  }
-  
-  /* Grupo de botones */
-  .button-group {
-    display: flex;
-    gap: 1rem;
-  }
-  
-  /* Botones */
-  .snake-button {
-    font-size: 1.2rem;
-    padding: 15px 30px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-    color: white;
-    font-weight: bold;
-  }
-  
-  /* Botón verde */
-  .snake-button.green {
-    background-color: green;
-  }
-  
-  .snake-button.green:hover {
-    background-color: darkgreen;
-    transform: scale(1.1);
-  }
-  
-  /* Botón azul */
-  .snake-button.blue {
-    background-color: blue;
-  }
-  
-  .snake-button.blue:hover {
-    background-color: darkblue;
-    transform: scale(1.1);
-  }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw; /* 100% del ancho de la ventana */
+  height: 100vh; /* 100% del alto de la ventana */
+  margin: 0; /* Elimina márgenes */
+  padding: 0; /* Elimina padding */
+  background: linear-gradient(135deg, #4caf50, #2196f3); /* Fondo degradado */
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  color: white;
+  box-sizing: border-box; /* Asegura que padding no afecte el tamaño */
+}
 
-  /* Botón para jugar solo */
-.snake-button.single {
-    background-color: orange;
-    color: white;
-  }
-  
-  .snake-button.single:hover {
-    background-color: darkorange;
-  }
-  
+/* Título del juego */
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+/* Subtítulo */
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #f0f0f0;
+}
+
+/* Campo de entrada */
+input {
+  font-size: 1.2rem;
+  padding: 10px;
+  width: 300px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+input:focus {
+  border-color: #ffffff;
+}
+
+/* Botón */
+button {
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  color: #4caf50;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(1);
+}

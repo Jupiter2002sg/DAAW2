@@ -1,24 +1,52 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import '../css/ScoreBoard.css'; // Asegúrate de que este archivo existe
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getRanking } from '../service/ApiSnakeGame'; // Importa la función de la API
+import '../css/ScoreBoard.css';
 
 const ScoreBoard = () => {
-  const location = useLocation();
+  const [ranking, setRanking] = useState([]); // Estado para almacenar los puntajes
+  const [loading, setLoading] = useState(true); // Estado de carga
+  const [error, setError] = useState(null); // Estado de error
   const navigate = useNavigate();
 
-  // Datos del puntaje recibidos al redirigir
-  const { score, mode } = location.state || { score: 0, mode: 'single' };
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        const data = await getRanking(); 
+        setRanking(data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError('Ocurrió un error al cargar el ranking.');
+        setLoading(false);
+      }
+    };
+
+    fetchRanking();
+  }, []);
 
   const handleRestart = () => {
-    // Redirige a la página de inicio
-    navigate('/');
+    navigate('/'); // Redirige a la página de inicio
   };
+
+  if (loading) {
+    return <p>Cargando ranking...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
 
   return (
     <div className="scoreboard-container">
-      <h1>¡GAME OVER!</h1>
-      <p>Modo: {mode === 'single' ? 'Un Jugador' : 'Dos Jugadores'}</p>
-      <h2>Tu Puntaje: {score}</h2>
+      <h1>Ranking</h1>
+      <ol>
+        {ranking.map((player, index) => (
+          <li key={index}>
+            {index + 1}. {player.name}: {player.score} puntos
+          </li>
+        ))}
+      </ol>
       <button onClick={handleRestart}>Volver al Inicio</button>
     </div>
   );
