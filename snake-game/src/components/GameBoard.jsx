@@ -164,7 +164,7 @@ const GameBoard = ({ player }) => {
           set(ref(db, 'gameState'), newState); // Sincronizar estado en Firebase
           return newState;
         });
-      }, 300);
+      }, 900);
 
       return () => clearInterval(interval);
     }
