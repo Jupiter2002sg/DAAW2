@@ -1,32 +1,48 @@
-
-.board {
-    display: grid;
-    grid-template-columns: repeat(10, 20px);
-    grid-template-rows: repeat(10, 20px);
-    gap: 1px;
-    position: relative;
+/* Contenedor principal centrado para SingleBoard */
+.single-board-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Altura completa de la pantalla */
+    background-color: #f0f0f0; /* Fondo claro */
+    box-sizing: border-box;
 }
 
+/* Tablero del juego */
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 50px); /* Cada celda mide 50px */
+    grid-template-rows: repeat(10, 50px);
+    gap: 3px; /* Espaciado entre celdas */
+    background-color: #ddd;
+    padding: 10px;
+    border: 3px solid #333; /* Bordes del tablero */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra alrededor del tablero */
+}
+
+/* Celdas del tablero */
 .cell {
-    width: 20px;
-    height: 20px;
+    width: 50px;
+    height: 50px;
     background-color: lightgrey;
 }
 
+/* Estilo de la comida */
+.cell.food {
+    background-color: red;
+    border-radius: 50%; /* Forma redondeada */
+}
+
+/* Estilo de la serpiente */
 .cell.snake {
     background-color: green;
 }
 
-.cell.food {
-    background-color: red;
-}
-
+/* Mensaje de fin del juego */
 .game-over {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
+    color: #d9534f;
+    font-size: 2rem; /* Ajusta el tamaño según sea necesario */
     font-weight: bold;
-    color: red;
+    text-align: center;
+    margin-top: 20px;
 }

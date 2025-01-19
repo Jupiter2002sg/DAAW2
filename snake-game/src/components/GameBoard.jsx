@@ -200,7 +200,8 @@ const GameBoard = ({ player }) => {
     <div className="game-container">
       {isBothPlayersConnected ? (
         <>
-          <div className="board">
+          <div 
+            className="board">
             {Array.from({ length: boardSize }).map((_, row) =>
               Array.from({ length: boardSize }).map((_, col) => (
                 <div
