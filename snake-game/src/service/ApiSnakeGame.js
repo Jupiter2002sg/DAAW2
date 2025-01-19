@@ -2,12 +2,12 @@ import axios from 'axios';
 
 // Configura la URL base de tu API
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api/scores', 
+  baseURL: 'https://localhost:8080/api/scores', 
 });
 
 // Función para obtener el ranking de puntuaciones
 export const getRanking = async (limit = 5) => {
-  const response = await api.get(`/ranking?limit=${limit}`);
+  const response = await api.get(`/ranking`);
   return response.data;
 };
 

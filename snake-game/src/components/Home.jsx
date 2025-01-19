@@ -14,6 +14,7 @@ const Home = () => {
     }
 
     try {
+      localStorage.setItem('playerName', playerName);
       await createScore(playerName, 0);
       navigate('/choose-snake', { state: { playerName } });
     } catch (error) {
@@ -24,7 +25,7 @@ const Home = () => {
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      handleNameSubmit(); // Permite enviar el formulario al presionar Enter
+      handleNameSubmit(); 
     }
   };
 

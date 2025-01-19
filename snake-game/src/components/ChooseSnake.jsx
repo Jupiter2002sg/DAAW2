@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ref, set } from 'firebase/database';
-import { db } from '../base'; // Configuración de Firebase
+import { db } from '../base';
 import '../css/ChooseSnake.css';
 
 const ChooseSnake = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const playerName = location.state?.playerName;
+  const playerName = localStorage.getItem('playerName');
 
   // Si no se recibe el nombre del jugador, redirige a Home
   if (!playerName) {
@@ -32,7 +31,7 @@ const ChooseSnake = () => {
 
   return (
     <div className="choose-snake-container">
-      <h1>Elige tu Serpiente</h1>
+      <h1>{playerName}, elige tu Serpiente</h1>
       <button className="snake-button green" onClick={() => handleSnakeSelection('snake1')}>
         Jugar como Snake 1
       </button>
