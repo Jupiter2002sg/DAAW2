@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, set, onValue, remove } from "firebase/database"; // Firebase functions
+import { ref, set, onValue, remove } from "firebase/database";
 import { db } from "../base"; // Firebase config
 import { getInitialGameState, boardSize, generateFood } from "../config";
 import '../css/GameBoard.css';
 
 const GameBoard = ({ player }) => {
-  const [gameState, setGameState] = useState(getInitialGameState()); // Estado del juego inicializado localmente
-  const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false); // Estado de conexión de los jugadores
+  const [gameState, setGameState] = useState(getInitialGameState());
+  const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false);
+  const [score, setScore] = useState(0);
   const navigate = useNavigate();
 
   // Inicializar el estado del juego en Firebase
   useEffect(() => {
     const gameStateRef = ref(db, 'gameState');
-    const initialState = getInitialGameState(); // Estado inicial del juego
-    set(gameStateRef, initialState); // Escribir directamente el estado inicial en Firebase
-    setGameState(initialState); // Sincronizar con el estado local
+    const initialState = getInitialGameState();
+    set(gameStateRef, initialState); 
+    setGameState(initialState); 
   }, []);
 
   // Manejar la conexión del jugador en Firebase
@@ -52,27 +53,46 @@ const GameBoard = ({ player }) => {
       const state = snapshot.val();
       if (state) {
         setGameState(state);
+
+        // Actualizar la puntuación en tiempo real
+        const playerSnake = player === 'snake1' ? state.snake1 : state.snake2;
+        setScore(playerSnake.length - 1); // La longitud menos la inicial
       } else {
         console.error('Estado del juego inválido detectado en Firebase.');
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [player]);
 
+  // Manejar el fin del juego
   useEffect(() => {
     if (gameState?.status === 'finished') {
-      navigate('/gameover', {
-        state: {
-          player1Name: gameState.playerNames?.snake1 || 'Player 1',
-          player2Name: gameState.playerNames?.snake2 || 'Player 2',
-          player1Score: gameState.scores?.snake1 || 0,
-          player2Score: gameState.scores?.snake2 || 0,
-        },
+      const player1Score = gameState.snake1.length - 1; // Puntaje del jugador 1
+      const player2Score = gameState.snake2.length - 1; // Puntaje del jugador 2
+
+      // Guardar las puntuaciones en Firebase al final del juego
+      set(ref(db, 'scores'), {
+        [gameState.playerNames?.snake1]: player1Score,
+        [gameState.playerNames?.snake2]: player2Score,
       });
+
+      // Redirigir al ganador o perdedor
+      if (player1Score > player2Score) {
+        navigate(player === 'snake1' ? '/winner' : '/gameover', {
+          state: { name: gameState.playerNames?.snake1, score: player1Score },
+        });
+      } else if (player2Score > player1Score) {
+        navigate(player === 'snake2' ? '/winner' : '/gameover', {
+          state: { name: gameState.playerNames?.snake2, score: player2Score },
+        });
+      } else {
+        // Empate
+        navigate('/gameover', { state: { name: 'Empate', score: player1Score } });
+      }
     }
-  }, [gameState?.status, navigate]);
-  
+  }, [gameState?.status, navigate, player]);
+
 
   // Manejar las teclas de movimiento del jugador
   const handleKeyDown = (e) => {
@@ -133,13 +153,6 @@ const GameBoard = ({ player }) => {
 
           if (snake1Collision || snake2Collision) {
             set(ref(db, 'gameState/status'), 'finished');
-            if (snake1Collision && !snake2Collision) {
-              navigate('/gameover', { state: { player: 'snake1' } });
-            } else if (snake2Collision && !snake1Collision) {
-              navigate('/gameover', { state: { player: 'snake2' } });
-            } else {
-              navigate('/gameover', { state: { player: 'both' } });
-            }
             return prev;
           }
 
@@ -168,7 +181,7 @@ const GameBoard = ({ player }) => {
 
       return () => clearInterval(interval);
     }
-  }, [gameState?.status, navigate]);
+  }, [gameState?.status]);
 
   // Verificar colisiones
   const checkCollision = (head, snake, otherSnake) => {
@@ -186,30 +199,34 @@ const GameBoard = ({ player }) => {
   return (
     <div className="game-container">
       {isBothPlayersConnected ? (
-        <div className="board">
-          {Array.from({ length: boardSize }).map((_, row) =>
-            Array.from({ length: boardSize }).map((_, col) => (
-              <div
-                key={`${row}-${col}`}
-                className={`cell ${
-                  gameState.snake1?.some((segment) => segment.x === col && segment.y === row)
-                    ? 'snake1'
-                    : gameState.snake2?.some((segment) => segment.x === col && segment.y === row)
-                    ? 'snake2'
-                    : gameState.food?.x === col && gameState.food?.y === row
-                    ? 'food'
-                    : ''
-                }`}
-              />
-            ))
-          )}
-        </div>
+        <>
+          <div className="board">
+            {Array.from({ length: boardSize }).map((_, row) =>
+              Array.from({ length: boardSize }).map((_, col) => (
+                <div
+                  key={`${row}-${col}`}
+                  className={`cell ${
+                    gameState.snake1?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake1'
+                      : gameState.snake2?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake2'
+                      : gameState.food?.x === col && gameState.food?.y === row
+                      ? 'food'
+                      : ''
+                  }`}
+                />
+              ))
+            )}
+          </div>
+          <div className="score-container">
+            <h2>Score: {score}</h2>
+          </div>
+        </>
       ) : (
         <h2 className="waiting-message">Esperando a que ambos jugadores se conecten...</h2>
       )}
     </div>
   );
-
 };
 
 export default GameBoard;

@@ -7,6 +7,7 @@ import GameOver from './components/GameOver';
 import WinnerPage from './components/WinnerPage';
 import Home from './components/Home';
 import ChooseSnake from './components/ChooseSnake';
+import SingleBoard from './components/SingleBoard';
 import './css/App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
                     <Route path="/gameover" element={<GameOver />} />
                     <Route path="/winnerpage" element={<WinnerPage />} />
                     <Route path="/choose-snake" element={<ChooseSnake />} />
+                    <Route path="/single" element={<SingleBoard/>} />
                 </Routes>
             </Router>
         </div>
