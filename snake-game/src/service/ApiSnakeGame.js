@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configura la URL base de tu API
 const api = axios.create({
-  baseURL: 'https://localhost:8080/api/scores', 
+  baseURL: 'https://localhost:8080/snakegame-1/api/scores', 
 });
 
 // Función para obtener el ranking de puntuaciones
