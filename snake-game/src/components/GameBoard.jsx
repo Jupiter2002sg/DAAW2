@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, set, onValue, remove } from "firebase/database";
-import { db } from "../base"; // Firebase config
+import { db } from "../base"; 
 import { getInitialGameState, boardSize, generateFood } from "../config";
+import { createScore } from "../service/ApiSnakeGame"; 
 import '../css/GameBoard.css';
 
 const GameBoard = ({ player }) => {
@@ -68,14 +69,29 @@ const GameBoard = ({ player }) => {
   // Manejar el fin del juego
   useEffect(() => {
     if (gameState?.status === 'finished') {
-      const player1Score = gameState.snake1.length - 1; // Puntaje del jugador 1
-      const player2Score = gameState.snake2.length - 1; // Puntaje del jugador 2
+      const player1Score = gameState.snake1.length - 1;
+      const player2Score = gameState.snake2.length - 1;
 
-      // Guardar las puntuaciones en Firebase al final del juego
-      set(ref(db, 'scores'), {
-        [gameState.playerNames?.snake1]: player1Score,
-        [gameState.playerNames?.snake2]: player2Score,
-      });
+      // Guardar en la API y en el localStorage
+      const saveScores = async () => {
+        if (gameState.playerNames?.snake1) {
+          await createScore(gameState.playerNames.snake1, player1Score);
+          localStorage.setItem('player1', JSON.stringify({
+            name: gameState.playerNames.snake1,
+            score: player1Score,
+          }));
+        }
+
+        if (gameState.playerNames?.snake2) {
+          await createScore(gameState.playerNames.snake2, player2Score);
+          localStorage.setItem('player2', JSON.stringify({
+            name: gameState.playerNames.snake2,
+            score: player2Score,
+          }));
+        }
+      };
+
+      saveScores();
 
       // Redirigir al ganador o perdedor
       if (player1Score > player2Score) {
@@ -87,11 +103,12 @@ const GameBoard = ({ player }) => {
           state: { name: gameState.playerNames?.snake2, score: player2Score },
         });
       } else {
-        // Empate
         navigate('/gameover', { state: { name: 'Empate', score: player1Score } });
       }
     }
   }, [gameState?.status, navigate, player]);
+
+  // Verificar colisiones y mover serpientes (mantén tu lógica existente aquí)
 
 
   // Manejar las teclas de movimiento del jugador
@@ -165,12 +182,14 @@ const GameBoard = ({ player }) => {
 
           // Comida
           if (newHead1.x === prev.food.x && newHead1.y === prev.food.y) {
-            newState.snake1.push({});
+            const lastSegment1 = newState.snake1[newState.snake1.length - 1];
+            newState.snake1.push({...lastSegment1 });
             newState.food = generateFood(newState.snake1, newState.snake2);
           }
 
           if (newHead2.x === prev.food.x && newHead2.y === prev.food.y) {
-            newState.snake2.push({});
+            const lastSegment2 = newState.snake2[newState.snake2.length - 1];
+            newState.snake2.push({...lastSegment2 });
             newState.food = generateFood(newState.snake1, newState.snake2);
           }
 
