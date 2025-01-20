@@ -1,161 +1,226 @@
 import React, { useState, useEffect } from 'react';
-import { ref, set, onValue } from "firebase/database";
+import { useNavigate } from 'react-router-dom';
+import { ref, set, onValue, remove } from "firebase/database";
 import { db } from "../base"; 
+import { getInitialGameState, boardSize, generateFood } from "../config";
+import { createScore } from "../service/ApiSnakeGame"; 
 import '../css/GameBoard.css';
 
-const boardSize = 10;
-const initialSnake1 = [{ x: 2, y: 2 }];
-const initialSnake2 = [{ x: 7, y: 7 }];
-const initialFood = { x: 5, y: 5 };
-
 const GameBoard = ({ player }) => {
-  const [snake1, setSnake1] = useState(initialSnake1);
-  const [snake2, setSnake2] = useState(initialSnake2);
-  const [food, setFood] = useState(initialFood);
-  const [direction1, setDirection1] = useState({ x: 0, y: 0 });
-  const [direction2, setDirection2] = useState({ x: 0, y: 0 });
-  const [gameOver, setGameOver] = useState(false);
+  const [gameState, setGameState] = useState(getInitialGameState());
   const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false);
+  const [score, setScore] = useState(0);
+  const navigate = useNavigate();
 
-  // Sincronizar estado inicial en Firebase
+  // Inicializar el estado del juego en Firebase
   useEffect(() => {
-    const initialState = {
-      snake1: initialSnake1,
-      snake2: initialSnake2,
-      food: initialFood,
-      direction1: { x: 0, y: 0 },
-      direction2: { x: 0, y: 0 },
-      status: 'waiting',
-    };
-    set(ref(db, 'gameState'), initialState);
+    const gameStateRef = ref(db, 'gameState');
+    const initialState = getInitialGameState();
+    set(gameStateRef, initialState); 
+    setGameState(initialState); 
   }, []);
 
-  // Manejar conexión de jugadores
+  // Manejar la conexión del jugador en Firebase
   useEffect(() => {
     const playerRef = ref(db, `players/${player}`);
     set(playerRef, { connected: true });
 
+    // Escuchar el estado de conexión de ambos jugadores
     const connectionRef = ref(db, 'players');
     const unsubscribe = onValue(connectionRef, (snapshot) => {
       const players = snapshot.val();
-      setIsBothPlayersConnected(players?.snake1?.connected && players?.snake2?.connected);
-      if (players?.snake1?.connected && players?.snake2?.connected) {
+      const snake1Connected = players?.snake1?.connected || false;
+      const snake2Connected = players?.snake2?.connected || false;
+
+      setIsBothPlayersConnected(snake1Connected && snake2Connected);
+
+      // Cambiar el estado del juego a "playing" si ambos están conectados
+      if (snake1Connected && snake2Connected) {
         set(ref(db, 'gameState/status'), 'playing');
       }
     });
 
-    return () => set(playerRef, { connected: false });
+    // Eliminar conexión del jugador al salir
+    return () => {
+      remove(playerRef);
+      unsubscribe();
+    };
   }, [player]);
 
-  // Escuchar el estado del juego
+  // Escuchar los cambios en el estado del juego desde Firebase
   useEffect(() => {
     const gameStateRef = ref(db, 'gameState');
     const unsubscribe = onValue(gameStateRef, (snapshot) => {
       const state = snapshot.val();
       if (state) {
-        setSnake1(state.snake1);
-        setSnake2(state.snake2);
-        setFood(state.food);
-        setDirection1(state.direction1);
-        setDirection2(state.direction2);
-        if (state.status === 'finished') setGameOver(true);
+        setGameState(state);
+      } else {
+        console.error('Estado del juego inválido detectado en Firebase.');
       }
     });
 
     return () => unsubscribe();
-  }, []);
-
-  // Manejar teclas de movimiento
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      let newDirection;
-      if (player === 'snake1') {
-        newDirection =
-          e.key === 'ArrowUp'
-            ? { x: 0, y: -1 }
-            : e.key === 'ArrowDown'
-            ? { x: 0, y: 1 }
-            : e.key === 'ArrowLeft'
-            ? { x: -1, y: 0 }
-            : e.key === 'ArrowRight'
-            ? { x: 1, y: 0 }
-            : null;
-        if (newDirection) set(ref(db, 'gameState/direction1'), newDirection);
-      } else if (player === 'snake2') {
-        newDirection =
-          e.key === 'w'
-            ? { x: 0, y: -1 }
-            : e.key === 's'
-            ? { x: 0, y: 1 }
-            : e.key === 'a'
-            ? { x: -1, y: 0 }
-            : e.key === 'd'
-            ? { x: 1, y: 0 }
-            : null;
-        if (newDirection) set(ref(db, 'gameState/direction2'), newDirection);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [player]);
 
-  // Mover serpientes
-  useEffect(() => {
-    if (isBothPlayersConnected && !gameOver) {
-      const interval = setInterval(() => {
-        set(ref(db, 'gameState'), (prevState) => {
-          const newState = { ...prevState };
+   useEffect(() => {
+    if (gameState?.status === 'finished') {
+      const player1Score = gameState.snake1.length - 1;
+      const player2Score = gameState.snake2.length - 1;
 
-          // Mover Snake1
+      // Generar un gameId único (debe venir de gameState o generarse dinámicamente)
+      const gameId = gameState.gameId || 'default_game_id';
+
+      const saveScores = async () => {
+        try {
+          let winnerData, loserData;
+
+          // Determinar el ganador y el perdedor
+          if (player1Score > player2Score) {
+            winnerData = {
+              name: gameState.playerNames.snake1,
+              score: player1Score,
+            };
+            loserData = {
+              name: gameState.playerNames.snake2,
+              score: player2Score,
+            };
+          } else if (player2Score > player1Score) {
+            winnerData = {
+              name: gameState.playerNames.snake2,
+              score: player2Score,
+            };
+            loserData = {
+              name: gameState.playerNames.snake1,
+              score: player1Score,
+            };
+          } 
+
+          // Guardar en Firebase
+          await set(ref(db, `games/${gameId}`), {
+            winner: winnerData,
+            loser: loserData,
+          });
+
+          // Guardar en la API
+          if (gameState.playerNames?.snake1) {
+            await createScore(gameState.playerNames.snake1, player1Score);
+          }
+          if (gameState.playerNames?.snake2) {
+            await createScore(gameState.playerNames.snake2, player2Score);
+          }
+
+          // Redirigir al ganador o al perdedor
+          if (player1Score > player2Score) {
+            navigate(player === 'snake1' ? '/winner' : '/gameover', {
+              state: winnerData,
+            });
+          } else if (player2Score > player1Score) {
+            navigate(player === 'snake2' ? '/winner' : '/gameover', {
+              state: winnerData,
+            });
+          } else {
+            navigate('/gameover', { state: { name: 'Empate', score: player1Score } });
+          }
+        } catch (error) {
+          console.error('Error al guardar los datos:', error);
+          alert('Ocurrió un error al guardar los puntajes. Inténtalo de nuevo.');
+        }
+      };
+
+      saveScores();
+    }
+  }, [gameState?.status, navigate, player]);
+
+  // Manejar las teclas de movimiento del jugador
+  const handleKeyDown = (e) => {
+    const newDirection =
+      e.key === 'ArrowUp'
+        ? { x: 0, y: -1 }
+        : e.key === 'ArrowDown'
+        ? { x: 0, y: 1 }
+        : e.key === 'ArrowLeft'
+        ? { x: -1, y: 0 }
+        : e.key === 'ArrowRight'
+        ? { x: 1, y: 0 }
+        : null;
+
+    if (newDirection) {
+      const directionKey = player === 'snake1' ? 'direction1' : 'direction2';
+      set(ref(db, `gameState/${directionKey}`), newDirection);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Lógica para mover las serpientes y verificar colisiones
+  useEffect(() => {
+    if (gameState?.status === 'playing') {
+      const interval = setInterval(() => {
+        setGameState((prev) => {
+          const newState = { ...prev };
+
+          // Validar que las serpientes están inicializadas correctamente
+          if (
+            !prev.snake1 || !prev.snake2 ||
+            !Array.isArray(prev.snake1) || !Array.isArray(prev.snake2) ||
+            prev.snake1.length === 0 || prev.snake2.length === 0
+          ) {
+            console.error('Error: Las serpientes no están inicializadas correctamente.');
+            return prev;
+          }
+
+          // Movimiento de Snake1
           const newHead1 = {
-            x: prevState.snake1[0].x + prevState.direction1.x,
-            y: prevState.snake1[0].y + prevState.direction1.y,
+            x: prev.snake1[0].x + prev.direction1.x,
+            y: prev.snake1[0].y + prev.direction1.y,
           };
 
-          // Mover Snake2
+          // Movimiento de Snake2
           const newHead2 = {
-            x: prevState.snake2[0].x + prevState.direction2.x,
-            y: prevState.snake2[0].y + prevState.direction2.y,
+            x: prev.snake2[0].x + prev.direction2.x,
+            y: prev.snake2[0].y + prev.direction2.y,
           };
 
           // Verificar colisiones
-          if (
-            checkCollision(newHead1, prevState.snake1, prevState.snake2) ||
-            checkCollision(newHead2, prevState.snake2, prevState.snake1)
-          ) {
-            newState.status = 'finished';
-            set(ref(db, 'gameState'), newState);
-            return newState;
+          const snake1Collision = checkCollision(newHead1, prev.snake1, prev.snake2);
+          const snake2Collision = checkCollision(newHead2, prev.snake2, prev.snake1);
+
+          if (snake1Collision || snake2Collision) {
+            set(ref(db, 'gameState/status'), 'finished');
+            return prev;
           }
 
-          // Actualizar Snake1
+          // Actualizar posiciones
           newState.snake1.unshift(newHead1);
-          if (newHead1.x !== prevState.food.x || newHead1.y !== prevState.food.y) {
-            newState.snake1.pop();
-          }
+          newState.snake1.pop();
 
-          // Actualizar Snake2
           newState.snake2.unshift(newHead2);
-          if (newHead2.x !== prevState.food.x || newHead2.y !== prevState.food.y) {
-            newState.snake2.pop();
-          }
+          newState.snake2.pop();
 
-          // Generar nueva comida
-          if (newHead1.x === prevState.food.x && newHead1.y === prevState.food.y) {
-            newState.food = generateFood(newState.snake1, newState.snake2);
-          }
-          if (newHead2.x === prevState.food.x && newHead2.y === prevState.food.y) {
+          // Comida
+          if (newHead1.x === prev.food.x && newHead1.y === prev.food.y) {
+            const lastSegment1 = newState.snake1[newState.snake1.length - 1];
+            newState.snake1.push({...lastSegment1 });
             newState.food = generateFood(newState.snake1, newState.snake2);
           }
 
+          if (newHead2.x === prev.food.x && newHead2.y === prev.food.y) {
+            const lastSegment2 = newState.snake2[newState.snake2.length - 1];
+            newState.snake2.push({...lastSegment2 });
+            newState.food = generateFood(newState.snake1, newState.snake2);
+          }
+
+          set(ref(db, 'gameState'), newState); // Sincronizar estado en Firebase
           return newState;
         });
-      }, 200);
+      }, 700);
 
       return () => clearInterval(interval);
     }
-  }, [isBothPlayersConnected, gameOver]);
+  }, [gameState?.status]);
 
   // Verificar colisiones
   const checkCollision = (head, snake, otherSnake) => {
@@ -169,30 +234,36 @@ const GameBoard = ({ player }) => {
     );
   };
 
-  // Renderizar tablero
+  // Renderizado del tablero
   return (
     <div className="game-container">
       {isBothPlayersConnected ? (
-        <div className="board">
-          {Array.from({ length: boardSize }).map((_, row) =>
-            Array.from({ length: boardSize }).map((_, col) => (
-              <div
-                key={`${row}-${col}`}
-                className={`cell ${
-                  snake1.some((segment) => segment.x === col && segment.y === row)
-                    ? 'snake1'
-                    : snake2.some((segment) => segment.x === col && segment.y === row)
-                    ? 'snake2'
-                    : food.x === col && food.y === row
-                    ? 'food'
-                    : ''
-                }`}
-              />
-            ))
-          )}
-        </div>
+        <>
+          <div 
+            className="board">
+            {Array.from({ length: boardSize }).map((_, row) =>
+              Array.from({ length: boardSize }).map((_, col) => (
+                <div
+                  key={`${row}-${col}`}
+                  className={`cell ${
+                    gameState.snake1?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake1'
+                      : gameState.snake2?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake2'
+                      : gameState.food?.x === col && gameState.food?.y === row
+                      ? 'food'
+                      : ''
+                  }`}
+                />
+              ))
+            )}
+          </div>
+          <div className="score-container">
+            <h2>Score: {score}</h2>
+          </div>
+        </>
       ) : (
-        <h2>Esperando a ambos jugadores...</h2>
+        <h2 className="waiting-message">Esperando a que ambos jugadores se conecten...</h2>
       )}
     </div>
   );
