@@ -30,7 +30,6 @@
 /* Estilo de la comida */
 .cell.food {
     background-color: red;
-    border-radius: 50%; /* Forma redondeada */
 }
 
 /* Estilo de la serpiente */

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ref, set, onValue, remove } from "firebase/database"; 
 import { db } from "../base"; 
+import { createScore } from "../service/ApiSnakeGame"; 
 import '../css/SingleBoard.css';
 
 const boardSize = 10;
@@ -57,7 +58,7 @@ const SingleBoard = () => {
                 newSnake.some(segment => segment.x === newHead.x && segment.y === newHead.y)
             ) {
                 setGameOver(true);
-                saveScoreToDatabase();
+                saveScoreToAPI();
                 return;
             }
 
@@ -81,11 +82,15 @@ const SingleBoard = () => {
         return () => clearInterval(interval);
     }, [snake, direction, food, gameOver, isGameStarted]);
 
-     // Guardar el puntaje en Firebase
-     const saveScoreToDatabase = () => {
+    const saveScoreToAPI = async () => {
         if (!userName) return;
-        const playerRef = ref(db, `scores/${userName}`);
-        set(playerRef, { score });
+        try {
+            await createScore(userName, score); // Llamada a la API
+            console.log(`Score saved: ${userName} - ${score}`);
+        } catch (error) {
+            console.error('Error saving score to API:', error);
+            alert('Failed to save score. Please try again.');
+        }
     };
 
     return (
