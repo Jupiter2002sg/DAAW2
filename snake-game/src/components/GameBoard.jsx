@@ -83,11 +83,24 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
         : e.key === 'ArrowRight'
         ? { x: 1, y: 0 }
         : null;
-    if (newDirection) {
-      const directionKey = player === 'snake1' ? 'direction1' : 'direction2';
-      set(ref(db, `gameState/${directionKey}`), newDirection);
-    }
+        if (newDirection) {
+          // Actualizar dirección en Firebase
+          set(ref(db, `game/directions/${currentSnakeKey}`), newDirection);
+        }
   };
+
+  useEffect(() => {
+    const directionsRef = ref(db, `game/directions`);
+    const unsubscribe = onValue(directionsRef, (snapshot) => {
+      const updatedDirections = snapshot.val();
+      if (updatedDirections) {
+        setDirections(updatedDirections);
+      }
+    });
+  
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
