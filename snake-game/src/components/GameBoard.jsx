@@ -72,32 +72,26 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
     return () => unsubscribe();
   }, []);
 
+  const handleKeyDown = (e) => {
+    const newDirection =
+      e.key === 'ArrowUp'
+        ? { x: 0, y: -1 }
+        : e.key === 'ArrowDown'
+        ? { x: 0, y: 1 }
+        : e.key === 'ArrowLeft'
+        ? { x: -1, y: 0 }
+        : e.key === 'ArrowRight'
+        ? { x: 1, y: 0 }
+        : null;
+    if (newDirection) {
+      const directionKey = player === 'snake1' ? 'direction1' : 'direction2';
+      set(ref(db, `gameState/${directionKey}`), newDirection);
+    }
+  };
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const newDirection = { ...directions[currentSnakeKey] };
-      switch (e.key) {
-        case 'ArrowUp':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = -1;
-          break;
-        case 'ArrowDown':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = 1;
-          break;
-        case 'ArrowLeft':
-          if (newDirection.x === 0) newDirection.x = -1, newDirection.y = 0;
-          break;
-        case 'ArrowRight':
-          if (newDirection.x === 0) newDirection.x = 1, newDirection.y = 0;
-          break;
-        default:
-          return;
-      }
-      set(ref(db, `info/directions/${player}`), newDirection);
-      setDirection(newDirection);
-    };
-
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentSnakeKey, directions]);
+  }, []);
 
   useEffect(() => {
     if (gameOver || isWaiting) return;
