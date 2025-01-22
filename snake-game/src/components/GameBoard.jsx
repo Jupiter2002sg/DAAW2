@@ -8,6 +8,7 @@ const boardSize = 10;
 const initialFood = { x: 5, y: 5 }; 
 
 const GameBoard = ({ player, player1Name, player2Name }) => {
+  const playerName = localStorage.getItem('playerName') || `Jugador ${player === 'snake1' ? '1' : '2'}`;
   const navigate = useNavigate();
   const [snakes, setSnakes] = useState({
     SNAKE1: [{ x: 2, y: 2 }],
@@ -28,7 +29,11 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
   // Registrar conexión del jugador en Firebase
   useEffect(() => {
     const playerRef = ref(db, `players/${player}`);
-    set(playerRef, { connected: true });
+    set(playerRef, { 
+      connected: true, 
+      name: playerName, 
+      score: 0 
+    });
 
     // Escuchar cambios en las conexiones de ambos jugadores
     const connectionRef = ref(db, 'players');
@@ -128,17 +133,62 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
   // Redirigir al GameOverDoble cuando el juego termine
   useEffect(() => {
     if (gameOver) {
-      navigate('/gameoverdoble', {
-        state: {
-          player1: player1Name,
-          player2: player2Name,
-          score1: snakes.SNAKE1.length - 1,
-          score2: snakes.SNAKE2.length - 1,
-        },
-      });
+      // Determinar el puntaje final de ambos jugadores
+      const score1 = snakes.SNAKE1.length - 1;
+      const score2 = snakes.SNAKE2.length - 1;
+  
+      const isSnake1Winner = score1 > score2;
+  
+      // Actualizar Firebase con los resultados
+      const updateGameResults = async () => {
+        const player1Ref = ref(db, 'players/snake1');
+        const player2Ref = ref(db, 'players/snake2');
+  
+        await set(player1Ref, {
+          connected: true,
+          name: player1Name,
+          score: score1,
+          winner: isSnake1Winner,
+        });
+  
+        await set(player2Ref, {
+          connected: true,
+          name: player2Name,
+          score: score2,
+          winner: !isSnake1Winner,
+        });
+      };
+  
+      updateGameResults();
+  
+      // Redirigir a las respectivas páginas
+      if (isSnake1Winner && player === 'snake1') {
+        navigate('/winnerpage', {
+          state: {
+            playerName: player1Name,
+            score: score1,
+          },
+        });
+      } else if (!isSnake1Winner && player === 'snake2') {
+        navigate('/winnerpage', {
+          state: {
+            playerName: player2Name,
+            score: score2,
+          },
+        });
+      } else {
+        navigate('/gameoverdoble', {
+          state: {
+            player1: player1Name,
+            player2: player2Name,
+            score1,
+            score2,
+          },
+        });
+      }
     }
-  }, [gameOver, navigate, player1Name, player2Name, snakes]);
-
+  }, [gameOver, navigate, player, player1Name, player2Name, snakes]);
+  
   // Mostrar mensaje de espera
   if (isWaiting) {
     return (
