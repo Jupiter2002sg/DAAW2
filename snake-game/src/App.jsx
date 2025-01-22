@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Ranking from './components/Ranking';
 import GameOverSingle from './components/GameOverSingle';
 import GameOverDoble from './components/GameOverDoble';
+import WinnerPage from './components/WinnerPage';
 import './css/App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/snake2" element={<GameBoard player="snake2" />} />
                     <Route path="/gameoverdoble" element={<GameOverDoble />} />
                     <Route path="/ranking" element={<Ranking />} />
+                    <Route path="/winnerpage" element={<WinnerPage />} />
                 </Routes>
             </div>
         </Router>
