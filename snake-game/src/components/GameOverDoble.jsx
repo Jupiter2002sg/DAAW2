@@ -3,29 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import ApiService from '../service/ApiService';
 import '../css/GameOverDoble.css';
 
-const GameOverDoble = ({ player1, player2, score1, score2, onRestart }) => {
+const GameOverDoble = ({ player1, player2, onRestart }) => {
     const navigate = useNavigate();
+    const [scores, setScores] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const updateScores = async () => {
+        const fetchScores = async () => {
             try {
-                // Actualizamos las puntuaciones de ambos jugadores
-                await ApiService.createOrUpdateScore(player1, score1);
-                await ApiService.createOrUpdateScore(player2, score2);
+                // Obtener las puntuaciones de ambos jugadores desde la API
+                const score1 = await ApiService.getScoresByPlayer(player1);
+                const score2 = await ApiService.getScoresByPlayer(player2);
+
+                // Guardar los resultados en el estado
+                setScores({
+                    [player1]: score1,
+                    [player2]: score2,
+                });
             } catch (err) {
-                setError('Error al actualizar las puntuaciones.');
+                setError('Error al obtener las puntuaciones.');
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
 
-        updateScores();
-    }, [player1, player2, score1, score2]);
+        fetchScores();
+    }, [player1, player2]);
 
-    if (loading) return <div className="gameover-container">Actualizando puntuaciones...</div>;
+    if (loading) return <div className="gameover-container">Cargando puntuaciones...</div>;
     if (error) return <div className="gameover-container">{error}</div>;
 
     return (
@@ -37,24 +44,24 @@ const GameOverDoble = ({ player1, player2, score1, score2, onRestart }) => {
                     <thead>
                         <tr>
                             <th>Jugador</th>
-                            <th>Puntuación</th>
+                            <th>Puntuación Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>{player1}</td>
-                            <td>{score1}</td>
+                            <td>{scores[player1]}</td>
                         </tr>
                         <tr>
                             <td>{player2}</td>
-                            <td>{score2}</td>
+                            <td>{scores[player2]}</td>
                         </tr>
                     </tbody>
                 </table>
                 <h3>
-                    {score1 > score2
+                    {scores[player1] > scores[player2]
                         ? `${player1} gana! 🎉`
-                        : score1 < score2
+                        : scores[player1] < scores[player2]
                         ? `${player2} gana! 🎉`
                         : '¡Es un empate! 🤝'}
                 </h3>

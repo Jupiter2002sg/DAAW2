@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db, ref, set, onValue, remove  } from "../firebaseConfig";
 import { getInitialGameState, boardSize, generateFood } from "../config";
+import ApiService from '../service/ApiService';
 import '../css/GameBoard.css';
 
 const GameBoard = ({ player }) => {
@@ -66,17 +67,29 @@ const GameBoard = ({ player }) => {
       const player1Score = gameState.snake1.length - 1;
       const player2Score = gameState.snake2.length - 1;
 
+      const snake1Name = gameState.playerNames?.snake1 || "Jugador 1";
+      const snake2Name = gameState.playerNames?.snake2 || "Jugador 2";
+
       // Guardar los puntajes y nombres en Firebase
       set(ref(db, `games`), {
-        snake1: { name: gameState.playerNames?.snake1, score: player1Score },
-        snake2: { name: gameState.playerNames?.snake2, score: player2Score },
+        snake1: { name: snake1Name, score: player1Score },
+        snake2: { name: snake2Name, score: player2Score },
       });
+
+      if (snake1Name) {
+        ApiService.createOrUpdateScore(snake1Name, player1Score)
+          .catch((error) => console.error('Error al actualizar score de Snake1:', error));
+      }
+      if (snake2Name) {
+        ApiService.createOrUpdateScore(snake2Name, player2Score)
+          .catch((error) => console.error('Error al actualizar score de Snake2:', error));
+      }
 
       // Redirigir a ambos jugadores al componente GameOverDoble
       navigate('/gameoverdoble', {
         state: {
-          player1: { name: gameState.playerNames?.snake1, score: player1Score },
-          player2: { name: gameState.playerNames?.snake2, score: player2Score },
+          player1: { name: snake1Name, score: player1Score },
+          player2: { name: snake2Name, score: player2Score },
         },
       });
     }
