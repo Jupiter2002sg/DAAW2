@@ -1,221 +1,195 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, set, onValue } from 'firebase/database';
-import { db } from '../base';
+import { ref, set, onValue, remove } from "firebase/database"; // Firebase functions
+import { db } from "../base"; // Firebase config
+import { getInitialGameState, boardSize, generateFood } from "../config";
 import '../css/GameBoard.css';
 
-const boardSize = 10; 
-const initialFood = { x: 5, y: 5 }; 
-
-const GameBoard = ({ player, player1Name, player2Name }) => {
-  const playerName = localStorage.getItem('playerName') || `Jugador ${player === 'snake1' ? '1' : '2'}`;
+const GameBoard = ({ player }) => {
+  const [gameState, setGameState] = useState(getInitialGameState()); // Estado del juego inicializado localmente
+  const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false); // Estado de conexión de los jugadores
   const navigate = useNavigate();
-  const [snakes, setSnakes] = useState({
-    SNAKE1: [{ x: 2, y: 2 }],
-    SNAKE2: [{ x: 7, y: 7 }],
-  });
-  const [food, setFood] = useState(initialFood);
-  const [directions, setDirections] = useState({
-    SNAKE1: { x: 1, y: 0 },
-    SNAKE2: { x: -1, y: 0 },
-  });
-  const [gameOver, setGameOver] = useState(false);
-  const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(true);
-  const isSnake1 = player === 'snake1';
-  const currentSnakeKey = isSnake1 ? 'SNAKE1' : 'SNAKE2';
-  const enemySnakeKey = isSnake1 ? 'SNAKE2' : 'SNAKE1';
 
-  // Registrar conexión del jugador en Firebase
+  // Inicializar el estado del juego en Firebase
+  useEffect(() => {
+    const gameStateRef = ref(db, 'gameState');
+    const initialState = getInitialGameState(); // Estado inicial del juego
+    set(gameStateRef, initialState); // Escribir directamente el estado inicial en Firebase
+    setGameState(initialState); // Sincronizar con el estado local
+  }, []);
+
+  // Manejar la conexión del jugador en Firebase
   useEffect(() => {
     const playerRef = ref(db, `players/${player}`);
-    set(playerRef, { 
-      connected: true, 
-      name: playerName, 
-      score: 0 
-    });
-
-    // Escuchar cambios en las conexiones de ambos jugadores
+    set(playerRef, { connected: true });
+    // Escuchar el estado de conexión de ambos jugadores
     const connectionRef = ref(db, 'players');
     const unsubscribe = onValue(connectionRef, (snapshot) => {
       const players = snapshot.val();
-      const bothConnected = players?.snake1?.connected && players?.snake2?.connected;
-      setIsBothPlayersConnected(bothConnected);
-
-      if (bothConnected) {
-        setIsWaiting(false); // Salir del estado de espera
-      } else {
-        setIsWaiting(true); // Regresar al estado de espera si un jugador se desconecta
+      const snake1Connected = players?.snake1?.connected || false;
+      const snake2Connected = players?.snake2?.connected || false;
+      setIsBothPlayersConnected(snake1Connected && snake2Connected);
+      // Cambiar el estado del juego a "playing" si ambos están conectados
+      if (snake1Connected && snake2Connected) {
+        set(ref(db, 'gameState/status'), 'playing');
       }
     });
-
-    // Limpiar referencia del jugador al salir
-    return () => set(playerRef, { connected: false });
+    // Eliminar conexión del jugador al salir
+    return () => {
+      remove(playerRef);
+      unsubscribe();
+    };
   }, [player]);
 
+  // Escuchar los cambios en el estado del juego desde Firebase
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const newDirection = { ...directions[currentSnakeKey] };
-      switch (e.key) {
-        case 'ArrowUp':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = -1;
-          break;
-        case 'ArrowDown':
-          if (newDirection.y === 0) newDirection.x = 0, newDirection.y = 1;
-          break;
-        case 'ArrowLeft':
-          if (newDirection.x === 0) newDirection.x = -1, newDirection.y = 0;
-          break;
-        case 'ArrowRight':
-          if (newDirection.x === 0) newDirection.x = 1, newDirection.y = 0;
-          break;
-        default:
-          return;
+    const gameStateRef = ref(db, 'gameState');
+    const unsubscribe = onValue(gameStateRef, (snapshot) => {
+      const state = snapshot.val();
+      if (state) {
+        setGameState(state);
+      } else {
+        console.error('Estado del juego inválido detectado en Firebase.');
       }
-      setDirections((prev) => ({
-        ...prev,
-        [currentSnakeKey]: newDirection,
-      }));
-    };
-
+    });
+    return () => unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (gameState?.status === 'finished') {
+      navigate('/gameover', {
+        state: {
+          player1Name: gameState.playerNames?.snake1 || 'Player 1',
+          player2Name: gameState.playerNames?.snake2 || 'Player 2',
+          player1Score: gameState.scores?.snake1 || 0,
+          player2Score: gameState.scores?.snake2 || 0,
+        },
+      });
+    }
+  }, [gameState?.status, navigate]);
+  
+  // Manejar las teclas de movimiento del jugador
+  const handleKeyDown = (e) => {
+    const newDirection =
+      e.key === 'ArrowUp'
+        ? { x: 0, y: -1 }
+        : e.key === 'ArrowDown'
+        ? { x: 0, y: 1 }
+        : e.key === 'ArrowLeft'
+        ? { x: -1, y: 0 }
+        : e.key === 'ArrowRight'
+        ? { x: 1, y: 0 }
+        : null;
+    if (newDirection) {
+      const directionKey = player === 'snake1' ? 'direction1' : 'direction2';
+      set(ref(db, `gameState/${directionKey}`), newDirection);
+    }
+  };
+  useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentSnakeKey, directions]);
+  }, []);
 
+  // Lógica para mover las serpientes y verificar colisiones
   useEffect(() => {
-    if (gameOver || isWaiting) return;
+    if (gameState?.status === 'playing') {
+      const interval = setInterval(() => {
+        setGameState((prev) => {
+          const newState = { ...prev };
 
-    const moveSnake = (snakeKey) => {
-      const currentSnake = snakes[snakeKey];
-      const direction = directions[snakeKey];
-      const newSnake = [...currentSnake];
-      const head = newSnake[0];
-      const newHead = { x: head.x + direction.x, y: head.y + direction.y };
+          // Validar que las serpientes están inicializadas correctamente
+          if (
+            !prev.snake1 || !prev.snake2 ||
+            !Array.isArray(prev.snake1) || !Array.isArray(prev.snake2) ||
+            prev.snake1.length === 0 || prev.snake2.length === 0
+          ) {
+            console.error('Error: Las serpientes no están inicializadas correctamente.');
+            return prev;
+          }
+          // Movimiento de Snake1
+          const newHead1 = {
+            x: prev.snake1[0].x + prev.direction1.x,
+            y: prev.snake1[0].y + prev.direction1.y,
+          };
+          // Movimiento de Snake2
+          const newHead2 = {
+            x: prev.snake2[0].x + prev.direction2.x,
+            y: prev.snake2[0].y + prev.direction2.y,
+          };
+          // Verificar colisiones
+          const snake1Collision = checkCollision(newHead1, prev.snake1, prev.snake2);
+          const snake2Collision = checkCollision(newHead2, prev.snake2, prev.snake1);
+          if (snake1Collision || snake2Collision) {
+            set(ref(db, 'gameState/status'), 'finished');
+            if (snake1Collision && !snake2Collision) {
+              navigate('/gameover', { state: { player: 'snake1' } });
+            } else if (snake2Collision && !snake1Collision) {
+              navigate('/gameover', { state: { player: 'snake2' } });
+            } else {
+              navigate('/gameover', { state: { player: 'both' } });
+            }
+            return prev;
+          }
 
-      // Colisiones
-      if (
-        newHead.x < 0 ||
-        newHead.y < 0 ||
-        newHead.x >= boardSize ||
-        newHead.y >= boardSize ||
-        newSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y) ||
-        snakes[enemySnakeKey].some((segment) => segment.x === newHead.x && segment.y === newHead.y)
-      ) {
-        setGameOver(true);
-        return null;
-      }
+          // Actualizar posiciones
+          newState.snake1.unshift(newHead1);
+          newState.snake1.pop();
 
-      newSnake.unshift(newHead);
-
-      // Comer comida
-      if (newHead.x === food.x && newHead.y === food.y) {
-        setFood({
-          x: Math.floor(Math.random() * boardSize),
-          y: Math.floor(Math.random() * boardSize),
+          newState.snake2.unshift(newHead2);
+          newState.snake2.pop();
+          // Comida
+          if (newHead1.x === prev.food.x && newHead1.y === prev.food.y) {
+            newState.snake1.push({});
+            newState.food = generateFood(newState.snake1, newState.snake2);
+          }
+          if (newHead2.x === prev.food.x && newHead2.y === prev.food.y) {
+            newState.snake2.push({});
+            newState.food = generateFood(newState.snake1, newState.snake2);
+          }
+          set(ref(db, 'gameState'), newState); // Sincronizar estado en Firebase
+          return newState;
         });
-      } else {
-        newSnake.pop();
-      }
+      }, 300);
 
-      return newSnake;
-    };
-
-    const interval = setInterval(() => {
-      setSnakes((prev) => ({
-        SNAKE1: moveSnake('SNAKE1') || prev.SNAKE1,
-        SNAKE2: moveSnake('SNAKE2') || prev.SNAKE2,
-      }));
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [snakes, directions, food, gameOver, enemySnakeKey, isWaiting]);
-
-  // Redirigir al GameOverDoble cuando el juego termine
-  useEffect(() => {
-    if (gameOver) {
-      // Determinar el puntaje final de ambos jugadores
-      const score1 = snakes.SNAKE1.length - 1;
-      const score2 = snakes.SNAKE2.length - 1;
-  
-      const isSnake1Winner = score1 > score2;
-  
-      // Actualizar Firebase con los resultados
-      const updateGameResults = async () => {
-        const player1Ref = ref(db, 'players/snake1');
-        const player2Ref = ref(db, 'players/snake2');
-  
-        await set(player1Ref, {
-          connected: true,
-          name: player1Name,
-          score: score1,
-          winner: isSnake1Winner,
-        });
-  
-        await set(player2Ref, {
-          connected: true,
-          name: player2Name,
-          score: score2,
-          winner: !isSnake1Winner,
-        });
-      };
-  
-      updateGameResults();
-  
-      // Redirigir a las respectivas páginas
-      if (isSnake1Winner && player === 'snake1') {
-        navigate('/winnerpage', {
-          state: {
-            playerName: player1Name,
-            score: score1,
-          },
-        });
-      } else if (!isSnake1Winner && player === 'snake2') {
-        navigate('/winnerpage', {
-          state: {
-            playerName: player2Name,
-            score: score2,
-          },
-        });
-      } else {
-        navigate('/gameoverdoble', {
-          state: {
-            player1: player1Name,
-            player2: player2Name,
-            score1,
-            score2,
-          },
-        });
-      }
+      return () => clearInterval(interval);
     }
-  }, [gameOver, navigate, player, player1Name, player2Name, snakes]);
-  
-  // Mostrar mensaje de espera
-  if (isWaiting) {
-    return (
-      <div className="waiting-message">
-        <h2>Esperando a ambos jugadores...</h2>
-      </div>
-    );
-  }
+  }, [gameState?.status, navigate]);
 
-  // Renderizar el tablero
+  // Verificar colisiones
+  const checkCollision = (head, snake, otherSnake) => {
+    return (
+      head.x < 0 ||
+      head.y < 0 ||
+      head.x >= boardSize ||
+      head.y >= boardSize ||
+      snake.some((segment) => segment.x === head.x && segment.y === head.y) ||
+      otherSnake.some((segment) => segment.x === head.x && segment.y === head.y)
+    );
+  };
+
+  // Renderizado del tablero
   return (
-    <div className="board">
-      {Array.from({ length: boardSize }).map((_, row) =>
-        Array.from({ length: boardSize }).map((_, col) => (
-          <div
-            key={`${row}-${col}`}
-            className={`cell ${
-              snakes.SNAKE1.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake1'
-                : snakes.SNAKE2.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake2'
-                : food.x === col && food.y === row
-                ? 'food'
-                : ''
-            }`}
-          />
-        ))
+    <div className="game-container">
+      {isBothPlayersConnected ? (
+        <div className="board">
+          {Array.from({ length: boardSize }).map((_, row) =>
+            Array.from({ length: boardSize }).map((_, col) => (
+              <div
+                key={`${row}-${col}`}
+                className={`cell ${
+                  gameState.snake1?.some((segment) => segment.x === col && segment.y === row)
+                    ? 'snake1'
+                    : gameState.snake2?.some((segment) => segment.x === col && segment.y === row)
+                    ? 'snake2'
+                    : gameState.food?.x === col && gameState.food?.y === row
+                    ? 'food'
+                    : ''
+                }`}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <h2 className="waiting-message">Esperando a que ambos jugadores se conecten...</h2>
       )}
     </div>
   );
