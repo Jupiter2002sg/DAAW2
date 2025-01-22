@@ -91,10 +91,8 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
         default:
           return;
       }
-      setDirections((prev) => ({
-        ...prev,
-        [currentSnakeKey]: newDirection,
-      }));
+      set(ref(db, `info/directions/${player}`), newDirection);
+      setDirection(newDirection);
     };
 
     document.addEventListener('keydown', handleKeyDown);
