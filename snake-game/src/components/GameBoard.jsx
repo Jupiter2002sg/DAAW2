@@ -133,7 +133,6 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
   // Redirigir al GameOverDoble cuando el juego termine
   useEffect(() => {
     if (gameOver) {
-      // Determinar el puntaje final de ambos jugadores
       const score1 = snakes.SNAKE1.length - 1;
       const score2 = snakes.SNAKE2.length - 1;
   
@@ -141,53 +140,53 @@ const GameBoard = ({ player, player1Name, player2Name }) => {
   
       // Actualizar Firebase con los resultados
       const updateGameResults = async () => {
-        const player1Ref = ref(db, 'players/snake1');
-        const player2Ref = ref(db, 'players/snake2');
-  
-        await set(player1Ref, {
-          connected: true,
-          name: player1Name,
-          score: score1,
-          winner: isSnake1Winner,
-        });
-  
-        await set(player2Ref, {
-          connected: true,
-          name: player2Name,
-          score: score2,
-          winner: !isSnake1Winner,
+        const gameStateRef = ref(db, 'gameState');
+        await set(gameStateRef, {
+          gameOver: true,
+          winner: isSnake1Winner ? 'snake1' : 'snake2',
+          scores: {
+            snake1: { name: player1Name, score: score1 },
+            snake2: { name: player2Name, score: score2 },
+          },
         });
       };
   
       updateGameResults();
-  
-      // Redirigir a las respectivas páginas
-      if (isSnake1Winner && player === 'snake1') {
-        navigate('/winnerpage', {
-          state: {
-            playerName: player1Name,
-            score: score1,
-          },
-        });
-      } else if (!isSnake1Winner && player === 'snake2') {
-        navigate('/winnerpage', {
-          state: {
-            playerName: player2Name,
-            score: score2,
-          },
-        });
-      } else {
-        navigate('/gameoverdoble', {
-          state: {
-            player1: player1Name,
-            player2: player2Name,
-            score1,
-            score2,
-          },
-        });
-      }
     }
-  }, [gameOver, navigate, player, player1Name, player2Name, snakes]);
+  }, [gameOver, snakes, player1Name, player2Name]);
+  
+  useEffect(() => {
+    const gameStateRef = ref(db, 'gameState');
+    const unsubscribe = onValue(gameStateRef, (snapshot) => {
+      const state = snapshot.val();
+  
+      if (state?.gameOver) {
+        const { winner, scores } = state;
+  
+        if (winner === player) {
+          // Este jugador ganó
+          navigate('/winnerpage', {
+            state: {
+              playerName: scores[player].name,
+              score: scores[player].score,
+            },
+          });
+        } else {
+          // Este jugador perdió
+          navigate('/gameoverdoble', {
+            state: {
+              player1: scores.snake1.name,
+              player2: scores.snake2.name,
+              score1: scores.snake1.score,
+              score2: scores.snake2.score,
+            },
+          });
+        }
+      }
+    });
+  
+    return () => unsubscribe();
+  }, [navigate, player]);
   
   // Mostrar mensaje de espera
   if (isWaiting) {
