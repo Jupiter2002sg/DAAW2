@@ -1,0 +1,65 @@
+/* src/css/Login.css */
+
+/* Fondo general (igual que Home.css) */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e90ff, #32cd32); /* Fondo degradado */
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+/* Contenedor principal */
+.login-container {
+    text-align: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.8); /* Fondo semitransparente */
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    max-width: 400px;
+}
+
+/* Título */
+.login-container h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Campo de entrada */
+.login-container input {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    text-align: center;
+}
+
+/* Botón "Continuar" */
+.login-container button {
+    display: inline-block; /* Cambia a inline-block para que funcione con el formulario */
+    padding: 10px 20px;
+    font-size: 18px;
+    color: white;
+    background: #32cd32;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.login-container button:hover {
+    background: #228b22;
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+}

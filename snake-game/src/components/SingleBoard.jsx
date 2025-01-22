@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, set, onValue, remove } from "firebase/database"; 
-import { db } from "../base"; 
-import { createScore } from "../service/ApiSnakeGame"; 
+import { useNavigate } from 'react-router-dom';
 import '../css/SingleBoard.css';
 
 const boardSize = 10;
@@ -14,8 +12,8 @@ const SingleBoard = () => {
     const [direction, setDirection] = useState({ x: 1, y: 0 });
     const [gameOver, setGameOver] = useState(false);
     const [score, setScore] = useState(0);
-    const [userName, setUserName] = useState('');
-    const [isGameStarted, setIsGameStarted] = useState(false);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -42,7 +40,11 @@ const SingleBoard = () => {
     }, []);
 
     useEffect(() => {
-        if (gameOver || !isGameStarted) return;
+        if (gameOver) {
+            // Redirigir a la pantalla GameOverSingle con el score actual
+            navigate('/gameoversingle', { state: { score } });
+            return;
+        }
 
         const moveSnake = () => {
             const newSnake = [...snake];
@@ -58,7 +60,6 @@ const SingleBoard = () => {
                 newSnake.some(segment => segment.x === newHead.x && segment.y === newHead.y)
             ) {
                 setGameOver(true);
-                saveScoreToAPI();
                 return;
             }
 
@@ -66,11 +67,11 @@ const SingleBoard = () => {
 
             // Check for food
             if (newHead.x === food.x && newHead.y === food.y) {
+                setScore(prevScore => prevScore + 1);
                 setFood({
                     x: Math.floor(Math.random() * boardSize),
                     y: Math.floor(Math.random() * boardSize)
                 });
-                setScore(score + 1);
             } else {
                 newSnake.pop();
             }
@@ -80,67 +81,26 @@ const SingleBoard = () => {
 
         const interval = setInterval(moveSnake, 200);
         return () => clearInterval(interval);
-    }, [snake, direction, food, gameOver, isGameStarted]);
-
-    const saveScoreToAPI = async () => {
-        if (!userName) return;
-        try {
-            await createScore(userName, score); // Llamada a la API
-            console.log(`Score saved: ${userName} - ${score}`);
-        } catch (error) {
-            console.error('Error saving score to API:', error);
-            alert('Failed to save score. Please try again.');
-        }
-    };
+    }, [snake, direction, food, gameOver, score, navigate]);
 
     return (
-        <div className="board-container">
-            {!isGameStarted ? (
-                <div className="start-menu">
-                    <input
-                        type="text"
-                        placeholder="Enter your name"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
+        <div className="board">
+            {Array.from({ length: boardSize }).map((_, row) =>
+                Array.from({ length: boardSize }).map((_, col) => (
+                    <div
+                        key={`${row}-${col}`}
+                        className={`cell ${
+                            snake.some(segment => segment.x === col && segment.y === row)
+                                ? 'snake'
+                                : food.x === col && food.y === row
+                                ? 'food'
+                                : ''
+                        }`}
                     />
-                    <button
-                        onClick={() => {
-                            if (userName.trim() === '') {
-                                alert('Please enter a name to start the game.');
-                                return;
-                            }
-                            setIsGameStarted(true);
-                        }}
-                    >
-                        Start Game
-                    </button>
-                </div>
-            ) : (
-                <div className="board">
-                    {Array.from({ length: boardSize }).map((_, row) =>
-                        Array.from({ length: boardSize }).map((_, col) => (
-                            <div
-                                key={`${row}-${col}`}
-                                className={`cell ${
-                                    snake.some(segment => segment.x === col && segment.y === row)
-                                        ? 'snake'
-                                        : food.x === col && food.y === row
-                                        ? 'food'
-                                        : ''
-                                }`}
-                            />
-                        ))
-                    )}
-                    {gameOver && <div className="game-over">Game Over</div>}
-                </div>
+                ))
             )}
-            <div className="score-board">
-                <h2>{userName ? `Player: ${userName}` : 'Player: N/A'}</h2>
-                <h2>Score: {score}</h2>
-            </div>
         </div>
     );
 };
-
 
 export default SingleBoard;

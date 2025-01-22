@@ -1,0 +1,71 @@
+/* src/css/Ranking.css */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e90ff, #32cd32);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.ranking-container {
+    background: rgba(0, 0, 0, 0.8); /* Fondo oscuro translúcido */
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+
+.ranking-container h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+.ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+.ranking-table th,
+.ranking-table td {
+    padding: 12px 15px;
+    text-align: center;
+}
+
+.ranking-table th {
+    background-color: #32cd32; /* Verde para encabezados */
+    color: white;
+    font-size: 18px;
+    text-transform: uppercase;
+    border: 2px solid #228b22;
+}
+
+.ranking-table td {
+    background-color: #f0f0f0; /* Fondo claro para filas */
+    color: #333; /* Texto oscuro */
+    border: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.ranking-table tr:nth-child(even) td {
+    background-color: #e6e6e6; /* Alternar colores para filas */
+}
+
+.ranking-table tr:hover td {
+    background-color: #d1ffd1; /* Resaltar fila al pasar el ratón */
+}
+
+.no-data {
+    font-size: 20px;
+    color: #ccc;
+    margin-top: 20px;
+}

@@ -1,0 +1,127 @@
+/* src/css/GameOverDoble.css */
+
+/* Fondo general */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e90ff, #32cd32);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+/* Contenedor principal */
+.gameover-container {
+    background: rgba(0, 0, 0, 0.9); /* Fondo oscuro translúcido */
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    width: 90%;
+    max-width: 600px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Título */
+.gameover-container h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #ff4c4c; /* Rojo llamativo */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+/* Resultados */
+.results {
+    margin-bottom: 20px;
+}
+
+.results h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* Tabla de resultados */
+.results-table {
+    width: 100%;
+    margin: 10px 0;
+    border-collapse: collapse;
+    color: white;
+}
+
+.results-table th,
+.results-table td {
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Bordes sutiles */
+    text-align: center;
+    font-size: 18px;
+}
+
+.results-table th {
+    background-color: #32cd32; /* Verde para encabezados */
+    color: black;
+    text-transform: uppercase;
+}
+
+.results-table tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.1); /* Color alterno */
+}
+
+.results-table tr:hover td {
+    background-color: rgba(50, 205, 50, 0.3); /* Resaltar al pasar el ratón */
+}
+
+/* Mensaje de empate o ganador */
+.results h3 {
+    margin-top: 20px;
+    font-size: 24px;
+    color: #ffd700; /* Dorado */
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Botones */
+.buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.buttons button {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 18px;
+    color: white;
+    background-color: #1e90ff; /* Azul principal */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.buttons button:hover {
+    background-color: #104e8b; /* Azul más oscuro */
+    transform: scale(1.05);
+}
+
+.buttons button:active {
+    transform: scale(1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}

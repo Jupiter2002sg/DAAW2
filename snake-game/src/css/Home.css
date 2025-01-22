@@ -1,68 +1,81 @@
+/* src/css/Home.css */
+
+/* Fondo general */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e90ff, #32cd32);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
 /* Contenedor principal */
 .home-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100vw; /* 100% del ancho de la ventana */
-  height: 100vh; /* 100% del alto de la ventana */
-  margin: 0; /* Elimina márgenes */
-  padding: 0; /* Elimina padding */
-  background: linear-gradient(135deg, #4caf50, #2196f3); /* Fondo degradado */
-  font-family: 'Arial', sans-serif;
-  text-align: center;
-  color: white;
-  box-sizing: border-box; /* Asegura que padding no afecte el tamaño */
+    text-align: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.8); /* Fondo semitransparente */
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    max-width: 400px;
 }
 
-/* Título del juego */
-h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  color: white;
+/* Botones generales */
+.home-container button {
+    display: block;
+    width: 80%;
+    margin: 15px auto;
+    padding: 15px 20px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Subtítulo */
-h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #f0f0f0;
+/* Botón Jugar Solo */
+.home-container .btn-solo {
+    background: #ff8c00; /* Naranja */
 }
 
-/* Campo de entrada */
-input {
-  font-size: 1.2rem;
-  padding: 10px;
-  width: 300px;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  outline: none;
-  transition: border-color 0.3s ease;
+.home-container .btn-solo:hover {
+    background: #ff4500; /* Naranja más oscuro */
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
 }
 
-input:focus {
-  border-color: #ffffff;
+/* Botón Snake 1 */
+.home-container .btn-snake1 {
+    background: #32cd32; /* Verde */
 }
 
-/* Botón */
-button {
-  font-size: 1.2rem;
-  padding: 10px 20px;
-  background-color: #ffffff;
-  color: #4caf50;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+.home-container .btn-snake1:hover {
+    background: #228b22; /* Verde más oscuro */
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
 }
 
-button:hover {
-  background-color: #e0e0e0;
-  transform: scale(1.05);
+/* Botón Snake 2 */
+.home-container .btn-snake2 {
+    background: #1e90ff; /* Azul */
 }
 
-button:active {
-  transform: scale(1);
+.home-container .btn-snake2:hover {
+    background: #00008b; /* Azul más oscuro */
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Título */
+.home-container h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
 }
