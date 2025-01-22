@@ -1,69 +1,89 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, ref, set, onValue } from "../firebaseConfig";
-import "../css/GameBoard.css";
-
-
-const boardSize = 10;
+import { db, ref, set, onValue, remove  } from "../firebaseConfig";
+import { getInitialGameState, boardSize, generateFood } from "../config";
+import '../css/GameBoard.css';
 
 const GameBoard = ({ player }) => {
+  const [gameState, setGameState] = useState(getInitialGameState());
+  const [isBothPlayersConnected, setIsBothPlayersConnected] = useState(false);
+  const [score, setScore] = useState(0);
   const navigate = useNavigate();
-  const playerName = localStorage.getItem('playerName') || "Jugador"; // Leer nombre desde localStorage
-  const [gameState, setGameState] = useState(null); // Estado global del juego
-  const [currentSnakeKey, setCurrentSnakeKey] = useState(null); // Determina si este jugador es SNAKE1 o SNAKE2
+  const playerName = localStorage.getItem('playerName') || 'Jugador';
 
-  // Detectar si el jugador es SNAKE1 o SNAKE2
+  // Inicializar el estado del juego en Firebase
   useEffect(() => {
-    const gameRef = ref(db, 'game');
-    const playerRef = ref(db, 'game/players');
+    const gameStateRef = ref(db, 'gameState');
+    const initialState = getInitialGameState();
+    set(gameStateRef, initialState); 
+    setGameState(initialState); 
+  }, []);
 
-    onValue(playerRef, (snapshot) => {
+  // Manejar la conexión del jugador en Firebase
+  useEffect(() => {
+    const playerRef = ref(db, `players/${player}`);
+    set(playerRef, { connected: true, name: playerName, score: 0 });
+
+    // Escuchar el estado de conexión de ambos jugadores
+    const connectionRef = ref(db, 'players');
+    const unsubscribe = onValue(connectionRef, (snapshot) => {
       const players = snapshot.val();
+      const snake1Connected = players?.snake1?.connected || false;
+      const snake2Connected = players?.snake2?.connected || false;
 
-      if (!players?.SNAKE1?.connected) {
-        // Si SNAKE1 no está conectado, asignar este jugador como SNAKE1
-        setCurrentSnakeKey('SNAKE1');
-        set(ref(db, 'game/players/SNAKE1'), {
-          connected: true,
-          name: playerName,
-          snake: [{ x: 2, y: 2 }],
-          direction: { x: 1, y: 0 },
-          score: 0,
-        });
-      } else if (!players?.SNAKE2?.connected) {
-        // Si SNAKE2 no está conectado, asignar este jugador como SNAKE2
-        setCurrentSnakeKey('SNAKE2');
-        set(ref(db, 'game/players/SNAKE2'), {
-          connected: true,
-          name: playerName,
-          snake: [{ x: 7, y: 7 }],
-          direction: { x: -1, y: 0 },
-          score: 0,
-        });
-      } else {
-        // Si ambos jugadores están conectados, este jugador no puede unirse
-        alert("El juego ya está lleno.");
-        navigate('/');
+      setIsBothPlayersConnected(snake1Connected && snake2Connected);
+
+      // Cambiar el estado del juego a "playing" si ambos están conectados
+      if (snake1Connected && snake2Connected) {
+        set(ref(db, 'gameState/status'), 'playing');
       }
     });
 
-    // Escuchar cambios en el estado del juego
-    const unsubscribeGame = onValue(gameRef, (snapshot) => {
-      setGameState(snapshot.val());
-    });
-
-    // Limpiar el jugador al salir
+    // Eliminar conexión del jugador al salir
     return () => {
-      if (currentSnakeKey) {
-        remove(ref(db, `game/players/${currentSnakeKey}`));
-      }
+      remove(playerRef);
+      unsubscribe();
     };
-  }, [playerName, navigate, currentSnakeKey]);
+  }, [player]);
 
-  // Manejar eventos de teclado
+  // Escuchar los cambios en el estado del juego desde Firebase
+  useEffect(() => {
+    const gameStateRef = ref(db, 'gameState');
+    const unsubscribe = onValue(gameStateRef, (snapshot) => {
+      const state = snapshot.val();
+      if (state) {
+        setGameState(state);
+      } else {
+        console.error('Estado del juego inválido detectado en Firebase.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [player]);
+
+   useEffect(() => {
+    if (gameState?.status === 'finished') {
+      const player1Score = gameState.snake1.length - 1;
+      const player2Score = gameState.snake2.length - 1;
+
+      // Guardar los puntajes y nombres en Firebase
+      set(ref(db, `games`), {
+        snake1: { name: gameState.playerNames?.snake1, score: player1Score },
+        snake2: { name: gameState.playerNames?.snake2, score: player2Score },
+      });
+
+      // Redirigir a ambos jugadores al componente GameOverDoble
+      navigate('/gameoverdoble', {
+        state: {
+          player1: { name: gameState.playerNames?.snake1, score: player1Score },
+          player2: { name: gameState.playerNames?.snake2, score: player2Score },
+        },
+      });
+    }
+  }, [gameState?.status, navigate]);
+
+  // Manejar las teclas de movimiento del jugador
   const handleKeyDown = (e) => {
-    if (!gameState || gameState.status !== 'playing') return;
-
     const newDirection =
       e.key === 'ArrowUp'
         ? { x: 0, y: -1 }
@@ -75,108 +95,126 @@ const GameBoard = ({ player }) => {
         ? { x: 1, y: 0 }
         : null;
 
-    if (newDirection && currentSnakeKey) {
-      update(ref(db, `game/players/${currentSnakeKey}`), { direction: newDirection });
+    if (newDirection) {
+      const directionKey = player === 'snake1' ? 'direction1' : 'direction2';
+      set(ref(db, `gameState/${directionKey}`), newDirection);
     }
   };
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, currentSnakeKey]);
+  }, []);
 
-  // Mover serpientes en intervalos
+  // Lógica para mover las serpientes y verificar colisiones
   useEffect(() => {
-    if (!gameState || gameState.status !== 'playing') return;
+    if (gameState?.status === 'playing') {
+      const interval = setInterval(() => {
+        setGameState((prev) => {
+          const newState = { ...prev };
 
-    const interval = setInterval(() => {
-      const updatedPlayers = { ...gameState.players };
+          // Validar que las serpientes están inicializadas correctamente
+          if (
+            !prev.snake1 || !prev.snake2 ||
+            !Array.isArray(prev.snake1) || !Array.isArray(prev.snake2) ||
+            prev.snake1.length === 0 || prev.snake2.length === 0
+          ) {
+            console.error('Error: Las serpientes no están inicializadas correctamente.');
+            return prev;
+          }
 
-      Object.keys(updatedPlayers).forEach((snakeKey) => {
-        const snake = updatedPlayers[snakeKey].snake;
-        const direction = updatedPlayers[snakeKey].direction;
-        const newHead = {
-          x: snake[0].x + direction.x,
-          y: snake[0].y + direction.y,
-        };
+          // Movimiento de Snake1
+          const newHead1 = {
+            x: prev.snake1[0].x + prev.direction1.x,
+            y: prev.snake1[0].y + prev.direction1.y,
+          };
 
-        // Colisiones
-        const isCollision =
-          newHead.x < 0 ||
-          newHead.y < 0 ||
-          newHead.x >= boardSize ||
-          newHead.y >= boardSize ||
-          snake.some((segment) => segment.x === newHead.x && segment.y === newHead.y) ||
-          updatedPlayers[currentSnakeKey === 'SNAKE1' ? 'SNAKE2' : 'SNAKE1'].snake.some(
-            (segment) => segment.x === newHead.x && segment.y === newHead.y
-          );
+          // Movimiento de Snake2
+          const newHead2 = {
+            x: prev.snake2[0].x + prev.direction2.x,
+            y: prev.snake2[0].y + prev.direction2.y,
+          };
 
-        if (isCollision) {
-          set(ref(db, 'game/status'), 'gameOver');
-          clearInterval(interval);
-          return;
-        }
+          // Verificar colisiones
+          const snake1Collision = checkCollision(newHead1, prev.snake1, prev.snake2);
+          const snake2Collision = checkCollision(newHead2, prev.snake2, prev.snake1);
 
-        // Comer comida
-        const isEatingFood = newHead.x === gameState.food.x && newHead.y === gameState.food.y;
-        if (isEatingFood) {
-          updatedPlayers[snakeKey].score += 1;
-          set(ref(db, 'game/food'), {
-            x: Math.floor(Math.random() * boardSize),
-            y: Math.floor(Math.random() * boardSize),
-          });
-        } else {
-          snake.pop();
-        }
+          if (snake1Collision || snake2Collision) {
+            set(ref(db, 'gameState/status'), 'finished');
+            return prev;
+          }
 
-        snake.unshift(newHead);
-      });
+          // Actualizar posiciones
+          newState.snake1.unshift(newHead1);
+          newState.snake1.pop();
 
-      update(ref(db, 'game/players'), updatedPlayers);
-    }, 200);
+          newState.snake2.unshift(newHead2);
+          newState.snake2.pop();
 
-    return () => clearInterval(interval);
-  }, [gameState, currentSnakeKey]);
+          // Comida
+          if (newHead1.x === prev.food.x && newHead1.y === prev.food.y) {
+            const lastSegment1 = newState.snake1[newState.snake1.length - 1];
+            newState.snake1.push({...lastSegment1 });
+            newState.food = generateFood(newState.snake1, newState.snake2);
+          }
 
-  // Redirigir cuando el juego termine
-  useEffect(() => {
-    if (gameState && gameState.status === 'gameOver') {
-      navigate('/gameoverdoble', {
-        state: {
-          score1: gameState.players.SNAKE1.score,
-          score2: gameState.players.SNAKE2.score,
-        },
-      });
+          if (newHead2.x === prev.food.x && newHead2.y === prev.food.y) {
+            const lastSegment2 = newState.snake2[newState.snake2.length - 1];
+            newState.snake2.push({...lastSegment2 });
+            newState.food = generateFood(newState.snake1, newState.snake2);
+          }
+
+          set(ref(db, 'gameState'), newState); // Sincronizar estado en Firebase
+          return newState;
+        });
+      }, 600);
+
+      return () => clearInterval(interval);
     }
-  }, [gameState, navigate]);
+  }, [gameState?.status]);
 
-  // Mostrar mensaje de espera
-  if (!gameState || gameState.status === 'waiting') {
-    return <h2>Esperando a ambos jugadores...</h2>;
-  }
+  // Verificar colisiones
+  const checkCollision = (head, snake, otherSnake) => {
+    return (
+      head.x < 0 ||
+      head.y < 0 ||
+      head.x >= boardSize ||
+      head.y >= boardSize ||
+      snake.some((segment) => segment.x === head.x && segment.y === head.y) ||
+      otherSnake.some((segment) => segment.x === head.x && segment.y === head.y)
+    );
+  };
 
-  // Renderizar el tablero
+  // Renderizado del tablero
   return (
-    <div className="board">
-      {Array.from({ length: boardSize }).map((_, row) =>
-        Array.from({ length: boardSize }).map((_, col) => (
-          <div
-            key={`${row}-${col}`}
-            className={`cell ${
-              gameState.players.SNAKE1.snake.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake1'
-                : gameState.players.SNAKE2.snake.some((segment) => segment.x === col && segment.y === row)
-                ? 'snake2'
-                : gameState.food.x === col && gameState.food.y === row
-                ? 'food'
-                : ''
-            }`}
-          />
-        ))
+    <div className="game-container">
+      {isBothPlayersConnected ? (
+        <>
+          <div 
+            className="board">
+            {Array.from({ length: boardSize }).map((_, row) =>
+              Array.from({ length: boardSize }).map((_, col) => (
+                <div
+                  key={`${row}-${col}`}
+                  className={`cell ${
+                    gameState.snake1?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake1'
+                      : gameState.snake2?.some((segment) => segment.x === col && segment.y === row)
+                      ? 'snake2'
+                      : gameState.food?.x === col && gameState.food?.y === row
+                      ? 'food'
+                      : ''
+                  }`}
+                />
+              ))
+            )}
+          </div>
+        </>
+      ) : (
+        <h2 className="waiting-message">Esperando a que ambos jugadores se conecten...</h2>
       )}
     </div>
   );
 };
 
 export default GameBoard;
-
