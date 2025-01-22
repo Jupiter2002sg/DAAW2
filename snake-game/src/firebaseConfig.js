@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
+import { getDatabase, ref, set, onValue } from "firebase/database";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBlF4Z4X-NbrUj5lSInahdZ_O4OcqsN1fg",
@@ -12,5 +12,7 @@ const firebaseConfig = {
     databaseURL: "https://game-sarah-default-rtdb.firebaseio.com/"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const db = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+export { db, ref, set, onValue };

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import SingleBoard from './components/SingleBoard';
 import GameBoard from './components/GameBoard';
+import GameBoardFuncional from './components/GameBoardFuncional';
 import Login from './components/Login';
 import Ranking from './components/Ranking';
 import GameOverSingle from './components/GameOverSingle';
@@ -25,6 +26,8 @@ function App() {
                     <Route path="/gameoverdoble" element={<GameOverDoble />} />
                     <Route path="/ranking" element={<Ranking />} />
                     <Route path="/winnerpage" element={<WinnerPage />} />
+                    <Route path="/snake10" element={<GameBoardFuncional player="snake10" />} />
+                    <Route path="/snake20" element={<GameBoardFuncional player="snake20" />} />
                 </Routes>
             </div>
         </Router>
