@@ -1,6 +1,6 @@
 // src/services/ApiService.js
 
-const API_URL = "https://0053-46-136-186-215.ngrok-free.app/api/scores";
+const API_URL = "https://b614-159-147-249-215.ngrok-free.app/snakegame-1/api/scores";
 
 const ApiService = {
     // Obtener todos los jugadores
